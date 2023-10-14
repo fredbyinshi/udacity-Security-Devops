@@ -1,7 +1,10 @@
 package com.example.demo.auth;
 
+import com.example.demo.controllers.loginController;
 import com.example.demo.model.persistence.User;
 import io.jsonwebtoken.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Component;
 
@@ -21,17 +24,20 @@ public class JwtUtil {
 
     private final String TOKEN_HEADER = "Authorization";
     private final String TOKEN_PREFIX = "Bearer ";
-
+    public static final Logger logger = LoggerFactory.getLogger(loginController.class);
     public JwtUtil(){
         this.jwtParser = Jwts.parser().setSigningKey(secret_key);
     }
 
     public String createToken(User user) {
         Claims claims = Jwts.claims().setSubject(user.getUsername());
+        logger.info("token subject set:"+user.getUsername());
         claims.put("username",user.getUsername());
         claims.put("password",user.getPassword());
         Date tokenCreateTime = new Date();
+        logger.info("Token generation time:"+tokenCreateTime);
         Date tokenValidity = new Date(tokenCreateTime.getTime() + TimeUnit.MINUTES.toMillis(accessTokenValidity));
+        logger.info("token validity"+tokenValidity);
         return Jwts.builder()
                 .setClaims(claims)
                 .setExpiration(tokenValidity)
@@ -51,9 +57,11 @@ public class JwtUtil {
             }
             return null;
         } catch (ExpiredJwtException ex) {
+            logger.error("error:"+ex.getMessage());
             req.setAttribute("expired", ex.getMessage());
             throw ex;
         } catch (Exception ex) {
+            logger.error("error resolving token:"+ex.getMessage());
             req.setAttribute("invalid", ex.getMessage());
             throw ex;
         }
@@ -70,13 +78,17 @@ public class JwtUtil {
 
     public boolean validateClaims(Claims claims) throws AuthenticationException {
         try {
-            return claims.getExpiration().after(new Date());
+            if (claims.getExpiration().after(new Date())){
+                return true;
+            }
+            return false;
         } catch (Exception e) {
+            logger.error("Token validation failed:"+e.getMessage());
             throw e;
         }
     }
 
-    public String getEmail(Claims claims) {
+    public String getUsername(Claims claims) {
         return claims.getSubject();
     }
 

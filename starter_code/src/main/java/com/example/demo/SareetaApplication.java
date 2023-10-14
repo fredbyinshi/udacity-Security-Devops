@@ -9,7 +9,6 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 @EntityScan("com.example.demo.model.persistence")
 @SpringBootApplication
 public class SareetaApplication {
-
 	public static void main(String[] args) {
 		SpringApplication.run(SareetaApplication.class, args);
 	}

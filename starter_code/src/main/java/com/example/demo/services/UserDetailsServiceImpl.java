@@ -26,6 +26,7 @@ public class UserDetailsServiceImpl  implements UserDetailsService {
         User user = userRepository.findByUsername(username);
         //logger.info("username in repository"+user.getUsername());
         if (user == null) {
+            logger.error("Invalid username and password");
             throw new BadCredentialsException("Invalid username and password");
         }
         List<String> roles = new ArrayList<>();
@@ -35,6 +36,7 @@ public class UserDetailsServiceImpl  implements UserDetailsService {
                         .password(user.getPassword())
                         .roles(roles.toArray(new String[0]))
                         .build();
+        logger.info("Logged in user Details:"+userDetails);
         return userDetails;
     }
 }

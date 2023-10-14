@@ -32,8 +32,8 @@ public class loginController {
     @RequestMapping(value = "/login",method = RequestMethod.POST)
     public ResponseEntity login(@RequestBody loginRequest loginReq)  {
         logger.info("login username >>>"+" "+loginReq.getUsername());
-        logger.info("login passwd:"+""+ loginReq.getPassword());
         try {
+            logger.info("Authenticating"+loginReq.getUsername());
             Authentication authentication =
                     authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
                             loginReq.getUsername(), loginReq.getPassword()));
@@ -41,16 +41,20 @@ public class loginController {
             User user = new User();
             user.setUsername(loginReq.getUsername());
             user.setPassword(loginReq.getPassword());
+            logger.info("Genating Token....");
             String token = jwtUtil.createToken(user);
+            logger.info("Token:"+token);
             loginResponse loginRes = new loginResponse(loginReq.getUsername(),token);
 
             return ResponseEntity.ok(loginRes);
 
         }catch (BadCredentialsException e){
             errorResponse errorResponse = new errorResponse(HttpStatus.BAD_REQUEST,"Invalid username or password");
+           logger.error("authentication failed:"+e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
         }catch (Exception e){
             errorResponse errorResponse = new errorResponse(HttpStatus.BAD_REQUEST, e.getMessage());
+            logger.error("authentication failed:"+e.getMessage());
            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
         }
     }

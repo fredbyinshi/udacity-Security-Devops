@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Logger;
 
 @Component
 public class JwtAuthorizationFilter extends OncePerRequestFilter {
@@ -41,14 +42,15 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
             Claims claims = jwtUtil.resolveClaims(request);
 
             if(claims != null & jwtUtil.validateClaims(claims)){
-                String email = claims.getSubject();
-                System.out.println("email : "+email);
+                String username = claims.getSubject();
                 Authentication authentication =
-                        new UsernamePasswordAuthenticationToken(email,"",new ArrayList<>());
+                        new UsernamePasswordAuthenticationToken(username,"",new ArrayList<>());
                 SecurityContextHolder.getContext().setAuthentication(authentication);
+                logger.info("User "+username+" authenticated!");
             }
 
         }catch (Exception e){
+            logger.error("Error:"+e.getMessage());
             errorDetails.put("message", "Authentication Error");
             errorDetails.put("details",e.getMessage());
             response.setStatus(HttpStatus.FORBIDDEN.value());

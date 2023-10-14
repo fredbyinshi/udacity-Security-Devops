@@ -1,7 +1,9 @@
 package com.example.demo.controllers;
 
-import java.util.Optional;
-
+import com.example.demo.model.requests.errorResponse;
+import com.example.demo.services.passwordService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,34 +21,60 @@ import com.example.demo.model.persistence.repositories.UserRepository;
 import com.example.demo.model.requests.CreateUserRequest;
 
 @RestController
-@RequestMapping("/api/user")
+@RequestMapping("/new/user")
 public class UserController {
-	
+
+	private passwordService passwordService;
 	@Autowired
 	private UserRepository userRepository;
 	
 	@Autowired
 	private CartRepository cartRepository;
+	public static final Logger logger = LoggerFactory.getLogger(loginController.class);
+
+	public UserController(passwordService bCryptPassword) {
+		this.passwordService = bCryptPassword;
+	}
 
 	@GetMapping("/id/{id}")
 	public ResponseEntity<User> findById(@PathVariable Long id) {
+		logger.info("getting user details by id:"+id);
+		logger.info("User details"+ResponseEntity.of(userRepository.findById(id)));
 		return ResponseEntity.of(userRepository.findById(id));
 	}
 	
 	@GetMapping("/{username}")
 	public ResponseEntity<User> findByUserName(@PathVariable String username) {
+		logger.info("getting user details by username:"+username);
 		User user = userRepository.findByUsername(username);
+		logger.info("User details"+ResponseEntity.ok(user));
 		return user == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(user);
 	}
 	
 	@PostMapping("/create")
-	public ResponseEntity<User> createUser(@RequestBody CreateUserRequest createUserRequest) {
+	public ResponseEntity createUser(@RequestBody CreateUserRequest createUserRequest) {
+		logger.info("Creating user");
+		logger.info("User creation request:"+createUserRequest.getUsername());
 		User user = new User();
-		user.setUsername(createUserRequest.getUsername());
 		Cart cart = new Cart();
-		cartRepository.save(cart);
-		user.setCart(cart);
-		userRepository.save(user);
+		if (userRepository.findByUsername(createUserRequest.getUsername()) != null){
+			errorResponse errorRes = new errorResponse(HttpStatus.CONFLICT,"Username already found");
+          return ResponseEntity.status(HttpStatus.CONFLICT).body(errorRes);
+		}else {
+			if(!passwordService.validatePasswd(createUserRequest.getPassword())){
+				logger.info("password violated the standards of the passwd");
+				errorResponse errorResponse = new errorResponse(HttpStatus.BAD_REQUEST,"Passwd must be longer" +
+						" that 8 characters of have special characters");
+				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+			}
+			user.setUsername(createUserRequest.getUsername());
+			user.setPassword(passwordService.getBCryptedPasswd(createUserRequest.getPassword()));
+			cartRepository.save(cart);
+			logger.info("created User:" + user);
+			user.setCart(cart);
+			userRepository.save(user);
+			logger.info("User registration is successfull:");
+		}
 		return ResponseEntity.ok(user);
 	}
 	
