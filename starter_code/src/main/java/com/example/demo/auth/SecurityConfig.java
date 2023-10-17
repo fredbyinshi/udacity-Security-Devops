@@ -19,17 +19,18 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 @Configuration
 @EnableWebSecurity
-public class SecurityConfig  {
+public class SecurityConfig {
 
     private final UserDetailsServiceImpl userDetailsService;
     private final JwtUtil jwtUtil;
     private final JwtAuthorizationFilter jwtAuthorizationFilter;
 
-    public SecurityConfig(UserDetailsServiceImpl userDetailsService,JwtUtil jwtUtil,JwtAuthorizationFilter jwtAuthorizationFilter) {
+    public SecurityConfig(UserDetailsServiceImpl userDetailsService, JwtUtil jwtUtil, JwtAuthorizationFilter jwtAuthorizationFilter) {
         this.userDetailsService = userDetailsService;
         this.jwtUtil = jwtUtil;
         this.jwtAuthorizationFilter = jwtAuthorizationFilter;
     }
+
     @Bean
     public AuthenticationManager authenticationManager(HttpSecurity http, PasswordEncoder passwordEncoder)
             throws Exception {
@@ -47,12 +48,11 @@ public class SecurityConfig  {
                         authorizeRequests
                                 .requestMatchers(new AntPathRequestMatcher("/h2-console/**")).permitAll()
                                 .requestMatchers(new AntPathRequestMatcher("/api/auth/**")).permitAll()
-                                .requestMatchers(new AntPathRequestMatcher("/new/user/**")).permitAll()
+                                .requestMatchers(new AntPathRequestMatcher("/api/user/new/**")).permitAll()
                                 .anyRequest().authenticated()
                 )
-               .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                .and().addFilterBefore(jwtAuthorizationFilter, UsernamePasswordAuthenticationFilter.class);;
-
+                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .and().addFilterBefore(jwtAuthorizationFilter, UsernamePasswordAuthenticationFilter.class);
         // Disable CSRF for this example
         http.headers().frameOptions().disable();
         http.csrf().disable();
